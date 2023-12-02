@@ -123,12 +123,26 @@ save_params(project_url, team_id, token, api)
 
 notify("Running", "You'll be notified when an open slot is found.")
 
+notified_slot_times = set()
+
 while True:
     print("\n\nChecking...")
     slots = get_slots()
-    if (len(slots) > 0):
-        print("Slot found.")
-        notify("Correction found!", "An open slot has been found.")
-        if api:
-            call_api("42: Correction Found")
+    new_slots_found = False
+
+    for slot in slots:
+        start_time = parser.parse(slot['start'])
+        end_time = parser.parse(slot['end'])
+        slot_time_str = f"{start_time.hour}:{start_time.minute:02d} - {end_time.hour}:{end_time.minute:02d}"
+
+        if slot_time_str not in notified_slot_times:
+            new_slots_found = True
+            notified_slot_times.add(slot_time_str)
+
+            notify("Correction found!", f"New open slot found at: {slot_time_str}")
+            if api:
+                call_api("42: Correction Found")
+
+    if not new_slots_found:
+        print("No new slots found.")
     time.sleep(WAIT_TIME)
